@@ -21,15 +21,17 @@ private:
 	static std::map<SysTick_Interrupt* const,const std::function<void(void)>> callFunctions_;
 public:
 	SysTick_Interrupt() = delete;
-	SysTick_Interrupt(const std::function<void(void)>&& addFunc)
+	SysTick_Interrupt(const std::function<void(void)>&& addFunc);
+
+	static void init(uint32_t frequency, uint32_t priority)
 	{
-		callFunctions_.insert(std::make_pair(this, addFunc));
+		RCC_ClocksTypeDef RCC_Clocks;
+		RCC_GetClocksFreq(&RCC_Clocks);
+		SysTick_Config(RCC_Clocks.HCLK_Frequency / frequency);
+		NVIC_SetPriority(SysTick_IRQn, priority);
 	}
 
-	static void update()
-	{
-		for(auto i : callFunctions_)i.second();
-	}
+	static void update(){ for(auto i : callFunctions_)i.second(); }
 
 	virtual ~SysTick_Interrupt() { SysTick_Interrupt::callFunctions_.erase(this); }
 };
