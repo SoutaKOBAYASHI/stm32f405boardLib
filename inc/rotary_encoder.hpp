@@ -9,6 +9,7 @@
 #define MYHEADERS_ROTARY_ENCODER_HPP_
 
 #include <type_traits>
+#include <utility>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
@@ -77,7 +78,14 @@ protected:
 				useRotEnc == encoderName::RotEnc2 ? RCC_APB1Periph_TIM3 :
 				useRotEnc == encoderName::RotEnc3 ? RCC_APB1Periph_TIM4 : RCC_APB1Periph_TIM5;
 
-		RCC_APB1PeriphClockCmd(RCC_Periph, ENABLE);
+		if constexpr (useRotEnc == encoderName::RotEnc1)
+		{
+			RCC_APB2PeriphClockCmd(RCC_Periph, ENABLE);
+		}
+		else
+		{
+			RCC_APB1PeriphClockCmd(RCC_Periph, ENABLE);
+		}
 	}
 
 	inline void configEncoderInterfaceMode_()
@@ -92,6 +100,16 @@ protected:
 
 	void configEncoderPins_()
 	{
+		GPIO_TypeDef* const useGpioPort =
+						useRotEnc == encoderName::RotEnc1 ? GPIOA :
+						useRotEnc == encoderName::RotEnc2 ? GPIOA :
+						useRotEnc == encoderName::RotEnc3 ? GPIOB : GPIOA;
+
+		const uint32_t RCC_Periph =
+						useGpioPort == GPIOA ? RCC_AHB1Periph_GPIOA : RCC_AHB1Periph_GPIOB;
+
+		RCC_AHB1PeriphClockCmd(RCC_Periph, ENABLE);
+
 		constexpr uint16_t useEncoderPins =
 				useRotEnc == encoderName::RotEnc1 ? (GPIO_Pin_8 | GPIO_Pin_9) :
 				useRotEnc == encoderName::RotEnc2 ? (GPIO_Pin_6 | GPIO_Pin_7) :
@@ -111,11 +129,18 @@ protected:
 				usePinsPuPd
 		};
 
-		GPIO_TypeDef* const useGpioPort =
-				useRotEnc == encoderName::RotEnc1 ? GPIOA :
-				useRotEnc == encoderName::RotEnc2 ? GPIOA :
-				useRotEnc == encoderName::RotEnc3 ? GPIOB : GPIOA;
+		constexpr uint8_t GPIO_AF  =
+				useRotEnc == encoderName::RotEnc1 ? GPIO_AF_TIM1 :
+				useRotEnc == encoderName::RotEnc2 ? GPIO_AF_TIM3 :
+				useRotEnc == encoderName::RotEnc3 ? GPIO_AF_TIM4 : GPIO_AF_TIM5;
 
+		constexpr std::pair<uint16_t, uint16_t> GPIO_PIN_SOURCE =
+				useRotEnc == encoderName::RotEnc1 ? std::make_pair(GPIO_PinSource8, GPIO_PinSource9) :
+				useRotEnc == encoderName::RotEnc2 ? std::make_pair(GPIO_PinSource6, GPIO_PinSource7) :
+				useRotEnc == encoderName::RotEnc3 ? std::make_pair(GPIO_PinSource6, GPIO_PinSource7) : std::make_pair(GPIO_PinSource0, GPIO_PinSource1);
+
+		GPIO_PinAFConfig(useGpioPort, GPIO_PIN_SOURCE.first, GPIO_AF);
+		GPIO_PinAFConfig(useGpioPort, GPIO_PIN_SOURCE.second, GPIO_AF);
 		GPIO_Init_reference(useGpioPort, gpioinitStruct);
 	}
 	constexpr TIM_TypeDef* getUseTimer_()
