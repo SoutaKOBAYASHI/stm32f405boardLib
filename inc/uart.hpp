@@ -189,12 +189,16 @@ public:
 	{
 		const uint8_t receive_byte = static_cast<uint8_t>(USART_ReceiveData(USART2));
 		for(auto i : uart1_call_functions_)i.second(receive_byte);
+		USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+		USART_ClearFlag(USART2, USART_FLAG_RXNE);
 	}
 
 	static void uart2Callback()
 	{
 		const uint8_t receive_byte = static_cast<uint8_t>(USART_ReceiveData(USART3));
 		for(auto i : uart2_call_functions_)i.second(receive_byte);
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+		USART_ClearFlag(USART3, USART_FLAG_RXNE);
 	}
 
 	virtual ~UART_Interrupt()
