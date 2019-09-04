@@ -7,16 +7,14 @@
 
 #include <systick.hpp>
 
-std::map<SysTick_Interrupt* const,const std::function<void(void)>> SysTick_Interrupt::callFunctions_;
-
 SysTick_Interrupt::SysTick_Interrupt(const std::function<void(void)>&& addFunc)
 {
 	callFunctions_.insert(std::make_pair(this, addFunc));
 }
 
-extern "C"
+extern"C"
 {
-	void SysTick_Handler()
+	void SysTick_Handler(void)
 	{
 		SysTick_Interrupt::update();
 	}

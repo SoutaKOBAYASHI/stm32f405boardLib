@@ -18,7 +18,7 @@
 class SysTick_Interrupt
 {
 private:
-	static std::map<SysTick_Interrupt* const,const std::function<void(void)>> callFunctions_;
+	static inline std::map<SysTick_Interrupt* const,const std::function<void(void)>> callFunctions_;
 public:
 	SysTick_Interrupt() = delete;
 	SysTick_Interrupt(const std::function<void(void)>&& addFunc);
