@@ -22,7 +22,9 @@ class UART
 {
 public:
 	UART() = delete;
-	UART(USART_TypeDef* const useUartName) : use_uart_name_(useUartName){}
+	UART(USART_TypeDef* const use_uart_name) : use_uart_name_(use_uart_name){}
+
+	inline uartName useUartName () const { return use_uart_name_ == USART2 ? uartName::uart1 : uartName::uart2; }
 
 	/*transmit a byte.*/
 	inline void transmitData(const uint8_t sendByte)
