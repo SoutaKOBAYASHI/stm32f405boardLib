@@ -19,6 +19,7 @@ class SysTick_Interrupt
 {
 private:
 	static inline std::map<SysTick_Interrupt* const,const std::function<void(void)>> callFunctions_;
+	static uint32_t frequency_;
 public:
 	SysTick_Interrupt() = delete;
 	SysTick_Interrupt(const std::function<void(void)>&& addFunc);
@@ -32,6 +33,8 @@ public:
 	}
 
 	static void update(){ for(auto i : callFunctions_)i.second(); }
+
+	inline static uint32_t readFreq(){ return frequency_; }
 
 	virtual ~SysTick_Interrupt() { SysTick_Interrupt::callFunctions_.erase(this); }
 };
