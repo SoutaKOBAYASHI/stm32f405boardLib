@@ -38,14 +38,7 @@ class ControlAreaNetwork
 private:
 	static inline std::queue<CanTxMsg> transmit_queue_ = {};
 public:
-	static void sendDataByQueue()
-	{
-		if(transmit_queue_.size() > 0)
-		{
-			CAN_Transmit(CAN1, &transmit_queue_.front());
-			transmit_queue_.pop();
-		}
-	}
+	static void sendDataByQueue();
 	template<size_t S>
 	void sendData(const std::array<uint8_t, S> &transmit_data_arr, uint8_t Address)
 	{

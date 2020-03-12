@@ -9,6 +9,14 @@
 
 std::map<CAN_Interrupt* const,const std::function<void(const CanRxMsg&)>> CAN_Interrupt::can_call_functions_;
 
+void ControlAreaNetwork::sendDataByQueue()
+{
+	if(transmit_queue_.size() > 0)
+	{
+		CAN_Transmit(CAN1, &transmit_queue_.front());
+		transmit_queue_.pop();
+	}
+}
 void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address)
 {
 	CanTxMsg can_tx_msg;
