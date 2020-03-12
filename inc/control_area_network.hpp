@@ -9,6 +9,7 @@
 #include <utility>
 #include <functional>
 #include <queue>
+#include <type_traits>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
@@ -41,31 +42,30 @@ private:
 public:
 	static void sendDataByQueue();
 	template<size_t S>
-	void sendData(const std::array<uint8_t, S> &transmit_data_arr, uint8_t Address)
+	auto sendData(const std::array<uint8_t, S> &send_data_arr, uint8_t Address) -> std::enable_if_t<(S <= 8), void>
 	{
-		static_assert( !(S > 8), "Size of SendDataArray has to be less than eight.");
-
 		CanTxMsg can_tx_msg;
 		can_tx_msg.StdId	= static_cast<uint32_t>(Address);
 		can_tx_msg.IDE		= CAN_ID_STD;
 		can_tx_msg.RTR		= CAN_RTR_DATA;
 		can_tx_msg.DLC		= S;
 		uint8_t count = 0;
-		for(auto& i : transmit_data_arr)
+		for(auto& i : send_data_arr)
 		{
 			can_tx_msg.Data[count] = i;
 			++count;
 		}
 
-		if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
-		{
-			CAN_Transmit(CAN1 , &can_tx_msg);
-		}
-		else
-		{
-			transmit_queue_.push(std::move(can_tx_msg));
-		}
+		sendRequest_(can_tx_msg);
 	}
+
+	template<size_t S>
+	auto sendData(const std::array<uint8_t, S> &send_data_arr, uint8_t Address) -> std::enable_if_t<(S > 8), void>
+	{
+
+	}
+
+	void sendData(const std::vector<uint8_t>& send_data_arr);
 
 	void sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address);
 

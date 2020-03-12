@@ -31,6 +31,11 @@ void ControlAreaNetwork::sendRequest_(CanTxMsg& send_msg)
 	}
 }
 
+void ControlAreaNetwork::sendData(const std::vector<uint8_t>& send_data_arr)
+{
+
+}
+
 void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address)
 {
 	CanTxMsg can_tx_msg;
@@ -38,16 +43,12 @@ void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Addr
 	can_tx_msg.IDE		= CAN_ID_STD;
 	can_tx_msg.RTR		= CAN_RTR_DATA;
 	can_tx_msg.DLC		= DataLenge;
-	for(uint8_t i = 0 ; i < DataLenge ; i++)can_tx_msg.Data[i] = Data[i];
+	for(uint8_t i = 0 ; (i < DataLenge) && (i < 8) ; i++)can_tx_msg.Data[i] = Data[i];
 
-	/*If all message boxes are pending, the data is transmitted without moving to queue.*/
-	if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
+	sendRequest_(can_tx_msg);
+	if(DataLenge > 8)
 	{
-		CAN_Transmit(CAN1 , &can_tx_msg);
-	}
-	else
-	{
-		transmit_queue_.push(std::move(can_tx_msg));
+		sendData((Data + 8), (DataLenge - 8), Address);
 	}
 }
 
@@ -59,17 +60,7 @@ void ControlAreaNetwork::sendRemote(uint8_t Address)
 	can_tx_msg.RTR		= CAN_RTR_REMOTE;
 	can_tx_msg.DLC		= 0;
 
-	/*If all message boxes are empty, the data is transmitted without moving to queue.*/
-	if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
-	{
-		CAN_Transmit(CAN1 , &can_tx_msg);
-	}
-	else
-	{
-		transmit_queue_.push(std::move(can_tx_msg));
-	}
-
-	return;
+	sendRequest_(can_tx_msg);
 }
 
 extern "C"
