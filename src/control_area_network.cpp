@@ -37,7 +37,7 @@ void ControlAreaNetwork::sendRemote(uint8_t Address)
 	can_tx_msg.RTR		= CAN_RTR_REMOTE;
 	can_tx_msg.DLC		= 0;
 
-	/*If all message boxes are pending, the data is transmitted without moving to queue.*/
+	/*If all message boxes are empty, the data is transmitted without moving to queue.*/
 	if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
 	{
 		CAN_Transmit(CAN1 , &can_tx_msg);
@@ -59,6 +59,6 @@ extern "C"
 
 	void CAN1_TX_IRQHandler()
 	{
-		ControlAreaNetwork::transmitDataByQueue();
+		ControlAreaNetwork::sendDataByQueue();
 	}
 }

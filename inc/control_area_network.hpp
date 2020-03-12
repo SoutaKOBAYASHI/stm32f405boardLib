@@ -38,7 +38,7 @@ class ControlAreaNetwork
 private:
 	static inline std::queue<CanTxMsg> transmit_queue_ = {};
 public:
-	static void transmitDataByQueue()
+	static void sendDataByQueue()
 	{
 		if(transmit_queue_.size() > 0)
 		{
@@ -63,7 +63,7 @@ public:
 			++count;
 		}
 
-		if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2)) //To wait while mail boxes are pending.
+		if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
 		{
 			CAN_Transmit(CAN1 , &can_tx_msg);
 		}
