@@ -37,6 +37,7 @@ class ControlAreaNetwork
 {
 private:
 	static inline std::queue<CanTxMsg> transmit_queue_ = {};
+	void sendRequest_(CanTxMsg& send_msg);
 public:
 	static void sendDataByQueue();
 	template<size_t S>

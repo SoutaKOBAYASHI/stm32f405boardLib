@@ -17,6 +17,20 @@ void ControlAreaNetwork::sendDataByQueue()
 		transmit_queue_.pop();
 	}
 }
+
+void ControlAreaNetwork::sendRequest_(CanTxMsg& send_msg)
+{
+	/*If all message boxes are pending, the data is transmitted without moving to queue.*/
+	if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2))
+	{
+		CAN_Transmit(CAN1 , &send_msg);
+	}
+	else
+	{
+		transmit_queue_.push(std::move(send_msg));
+	}
+}
+
 void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address)
 {
 	CanTxMsg can_tx_msg;
