@@ -3,10 +3,12 @@
 #define CONTROL_AREA_NETWORK_HPP__
 
 #include <array>
+#include <vector>
 #include <map>
 #include <queue>
 #include <utility>
 #include <functional>
+#include <queue>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
@@ -33,20 +35,42 @@ enum class CAN_TimeQuanta : uint8_t
 
 class ControlAreaNetwork
 {
+private:
+	static inline std::queue<CanTxMsg> transmit_queue_ = {};
 public:
+	static void transmitDataByQueue()
+	{
+		if(transmit_queue_.size() > 0)
+		{
+			CAN_Transmit(CAN1, &transmit_queue_.front());
+			transmit_queue_.pop();
+		}
+	}
 	template<size_t S>
-	void sendData(const std::array<uint8_t, S> &SendDataArray, uint8_t Address)
+	void sendData(const std::array<uint8_t, S> &transmit_data_arr, uint8_t Address)
 	{
 		static_assert( !(S > 8), "Size of SendDataArray has to be less than eight.");
 
-		while(!(CAN1->TSR & CAN_TSR_TME0) || !(CAN1->TSR & CAN_TSR_TME1) || !(CAN1->TSR & CAN_TSR_TME2)); //To wait while mail boxes are pending.
-		CanTxMsg CanTxMsgStructure;
-		CanTxMsgStructure.StdId				= static_cast<uint32_t>(Address);
-		CanTxMsgStructure.IDE				= CAN_ID_STD;
-		CanTxMsgStructure.RTR				= CAN_RTR_DATA;
-		CanTxMsgStructure.DLC	= S;
-		for(uint8_t i = 0 ; i < CanTxMsgStructure.DLC ; i++)CanTxMsgStructure.Data[i] = SendDataArray[i];
-		CAN_Transmit(CAN1 , &CanTxMsgStructure);
+		CanTxMsg can_tx_msg;
+		can_tx_msg.StdId	= static_cast<uint32_t>(Address);
+		can_tx_msg.IDE		= CAN_ID_STD;
+		can_tx_msg.RTR		= CAN_RTR_DATA;
+		can_tx_msg.DLC		= S;
+		uint8_t count = 0;
+		for(auto& i : transmit_data_arr)
+		{
+			can_tx_msg.Data[count] = i;
+			++count;
+		}
+
+		if((CAN1->TSR & CAN_TSR_TME0) && (CAN1->TSR & CAN_TSR_TME1) && (CAN1->TSR & CAN_TSR_TME2)) //To wait while mail boxes are pending.
+		{
+			CAN_Transmit(CAN1 , &can_tx_msg);
+		}
+		else
+		{
+			transmit_queue_.push(std::move(can_tx_msg));
+		}
 	}
 
 	void sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address);
@@ -106,11 +130,19 @@ public:
 
 		CAN_ITConfig(CAN1 , CAN_IT_FMP0 , ENABLE);
 
-		NVIC_InitTypeDef NVIC_InitStructure;
-		NVIC_InitStructure.NVIC_IRQChannel						= CAN1_RX0_IRQn;
-		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority	= 0;
-		NVIC_InitStructure.NVIC_IRQChannelCmd					= ENABLE;
-		NVIC_Init(&NVIC_InitStructure);
+		/*Initial interrupting for RX0*/
+		NVIC_InitTypeDef rx0_nvic_init_struct;
+		rx0_nvic_init_struct.NVIC_IRQChannel						= CAN1_RX0_IRQn;
+		rx0_nvic_init_struct.NVIC_IRQChannelPreemptionPriority	= 0;
+		rx0_nvic_init_struct.NVIC_IRQChannelCmd					= ENABLE;
+		NVIC_Init(&rx0_nvic_init_struct);
+
+		/*Initial interrupting  complete TX*/
+		NVIC_InitTypeDef tx_nvic_init_struct;
+		tx_nvic_init_struct.NVIC_IRQChannel						= CAN1_TX_IRQn;
+		tx_nvic_init_struct.NVIC_IRQChannelPreemptionPriority	= 0;
+		tx_nvic_init_struct.NVIC_IRQChannelCmd					= ENABLE;
+		NVIC_Init(&tx_nvic_init_struct);
 	}
 
 	ControlAreaNetwork can_interface;
