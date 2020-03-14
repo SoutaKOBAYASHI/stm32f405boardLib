@@ -32,7 +32,7 @@ public:
 		NVIC_SetPriority(SysTick_IRQn, priority);
 	}
 
-	static void update(){ for(auto i : callFunctions_)i.second(); }
+	static void update(){ for(auto& i : callFunctions_)i.second(); }
 
 	inline static uint32_t readFreq(){ return frequency_; }
 
