@@ -42,7 +42,7 @@ private:
 public:
 	static void sendDataByQueue();
 	template<size_t S>
-	auto sendData(const std::array<uint8_t, S> &send_data_arr, uint8_t Address) -> std::enable_if_t<(S <= 8), void>
+	auto sendData(const std::array<uint8_t, S> &send_data_arr, const uint8_t Address) -> std::enable_if_t<(S <= 8), void>
 	{
 		CanTxMsg can_tx_msg;
 		can_tx_msg.StdId	= static_cast<uint32_t>(Address);
@@ -60,14 +60,29 @@ public:
 	}
 
 	template<size_t S>
-	auto sendData(const std::array<uint8_t, S> &send_data_arr, uint8_t Address) -> std::enable_if_t<(S > 8), void>
+	auto sendData(const std::array<uint8_t, S> &send_data_arr, const uint8_t Address) -> std::enable_if_t<(S > 8), void>
 	{
+		std::array<uint8_t, 8> 		first_send_data_arr = {};
+		std::array<uint8_t, S - 8> 	next_send_data_arr 	= {};
+		uint8_t count = 0;
+		for(auto& i : first_send_data_arr)
+		{
+			i = send_data_arr.at(count);
+			++count;
+		}
+		sendData(first_send_data_arr, Address);
+		count = 0;
 
+		for(auto& i : next_send_data_arr){
+			i = send_data_arr.at(count + 8);
+			++count;
+		}
+		sendData(next_send_data_arr, Address);
 	}
 
-	void sendData(const std::vector<uint8_t>& send_data_arr);
+	void sendData(const std::vector<uint8_t>& send_data_arr, const uint8_t Address);
 
-	void sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address);
+	void sendData(uint8_t *Data, uint8_t DataLenge, const uint8_t Address);
 
 	void sendRemote(uint8_t Address);
 };
