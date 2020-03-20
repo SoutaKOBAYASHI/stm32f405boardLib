@@ -31,15 +31,34 @@ void ControlAreaNetwork::sendRequest_(CanTxMsg& send_msg)
 	}
 }
 
-void ControlAreaNetwork::sendData(const std::vector<uint8_t>& send_data_arr)
+void ControlAreaNetwork::sendData(const std::vector<uint8_t>& send_data_arr, const uint8_t address)
 {
-
+	std::queue<uint8_t> send_queue;
+	for(auto& i : send_data_arr)
+	{
+		send_queue.push(i);
+	}
+	CanTxMsg can_tx_msg;
+	can_tx_msg.StdId		= static_cast<uint32_t>(address);
+	can_tx_msg.IDE		= CAN_ID_STD;
+	can_tx_msg.RTR		= CAN_RTR_DATA;
+	while(!send_queue.empty())
+	{
+		uint8_t count = 0;
+		for(count = 0; count < 8 && !send_queue.empty(); ++count)
+		{
+			can_tx_msg.Data[count] = send_queue.front();
+			if(!send_queue.empty())send_queue.pop();
+		}
+		can_tx_msg.DLC = count;
+		sendRequest_(can_tx_msg);
+	}
 }
 
-void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, uint8_t Address)
+void ControlAreaNetwork::sendData(uint8_t *Data, uint8_t DataLenge, const uint8_t Address)
 {
 	CanTxMsg can_tx_msg;
-	can_tx_msg.StdId		= static_cast<uint32_t>(Address);
+	can_tx_msg.StdId	= static_cast<uint32_t>(Address);
 	can_tx_msg.IDE		= CAN_ID_STD;
 	can_tx_msg.RTR		= CAN_RTR_DATA;
 	can_tx_msg.DLC		= DataLenge;
